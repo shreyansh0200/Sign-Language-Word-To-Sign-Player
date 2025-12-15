@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Lookup & Player</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding-top: 50px;
+            background: #e5d7c5;
+            background-image: 
+                url('https://i.imgur.com/0Zf6f2f.png'),
+                url('https://i.imgur.com/v1xWbV8.jpg');
+            background-size: 500px, cover;
+            background-repeat: repeat, no-repeat;
+            background-attachment: fixed;
+            color: #3b2e25;
+            display: flex;
+            justify-content: center;
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(6px);
+            padding: 40px 35px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 750px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        h1 {
+            text-align: center;
+            color: #5a4633;
+            margin-bottom: 25px;
+        }
+
+        form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 14px 16px;
+            width: 65%;
+            max-width: 420px;
+            border-radius: 10px;
+            border: 2px solid #bba690;
+            background: #f9f4ec;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            padding: 14px 25px;
+            border: none;
+            background: #8b6f50;
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mic-btn {
+            padding: 14px 20px;
+            background: #a67c52;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mic-btn.listening {
+            background: #d35400;
+            box-shadow: 0 0 10px red;
+        }
+
+        .video-wrapper {
+            background: #f4eadf;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #c8b6a2;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="player-container">
+    <h1>🤟 Sign Language Lookup & Player</h1>
+
+    <form id="form" method="POST">
+        <input type="text" id="video_name" name="video_name" placeholder="Enter word or use mic..." required>
+
+        <!-- MIC BUTTON (M) -->
+        <button type="button" class="mic-btn" id="micBtn" onclick="startListening()">M</button>
+
+        <button type="submit">Search</button>
+    </form>
+
+    {% if video_name %}
+    <div class="video-wrapper">
+        <h2>Showing sign for: <strong>{{ video_name }}</strong></h2>
+        <video controls autoplay>
+            <source src="/videos/{{ video_name }}" type="video/mp4">
+        </video>
+    </div>
+
+    {% elif request.method == 'POST' %}
+    <div class="error-message">
+        <h3>🚫 Sign Not Found</h3>
+    </div>
+
+    {% else %}
+    <div class="initial-message">
+        Speak or type a word to play its sign animation.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function startListening() {
+    let micButton = document.getElementById("micBtn");
+
+    // Add listening effect
+    micButton.classList.add("listening");
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";  // voice language
+
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        let spokenWord = event.results[0][0].transcript.toLowerCase();
+        document.getElementById("video_name").value = spokenWord;
+
+        // Auto-submit form
+        document.getElementById("form").submit();
+    };
+
+    recognition.onerror = function() {
+        micButton.classList.remove("listening");
+        alert("Voice recognition error. Please try again.");
+    };
+
+    recognition.onend = function() {
+        micButton.classList.remove("listening");
+    };
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Lookup & Player</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding-top: 50px;
+            background: #e5d7c5;
+            background-image: 
+                url('https://i.imgur.com/0Zf6f2f.png'),
+                url('https://i.imgur.com/v1xWbV8.jpg');
+            background-size: 500px, cover;
+            background-repeat: repeat, no-repeat;
+            background-attachment: fixed;
+            color: #3b2e25;
+            display: flex;
+            justify-content: center;
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(6px);
+            padding: 40px 35px;
+            border-radius: 20px;
+            width: 750px;           /* FIXED PIXEL SIZE */
+            max-width: 750px;       /* FIXED PIXEL SIZE */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.6);
+            text-align: center;
+        }
+
+        h1 {
+            color: #5a4633;
+            margin-bottom: 25px;
+        }
+
+        form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 14px 16px;
+            width: 65%;
+            max-width: 420px;
+            border-radius: 10px;
+            border: 2px solid #bba690;
+            background: #f9f4ec;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            padding: 14px 25px;
+            border: none;
+            background: #8b6f50;
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mic-btn {
+            padding: 14px 20px;
+            background: #a67c52;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mic-btn.listening {
+            background: #d35400;
+            box-shadow: 0 0 15px #ff4444;
+        }
+
+        .video-wrapper {
+            background: #f4eadf;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #c8b6a2;
+            margin-top: 20px;
+        }
+
+        video {
+            width: 100%;
+            max-width: 500px;     /* FIXED PIXEL SIZE */
+            height: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .initial-message, .error-message {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #5a4633;
+        }
+
+        .error-message h3 {
+            color: #b12d2d;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+
+    <h1> Sign Language WORD to SYMBLE Player</h1>
+
+    {% if recognized %}
+        <p><i>I heard: "{{ recognized }}" (Corrected: "{{ corrected }}")</i></p>
+    {% endif %}
+
+    <form id="form" method="POST">
+        <input type="text" id="video_name" name="video_name" placeholder="Type a word..." value="{{ recognized or '' }}" required>
+        <button type="button" class="mic-btn" id="micBtn" onclick="startListening()">🎤</button>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if video_name %}
+    <div class="video-wrapper">
+        <h2>Showing sign for: <strong>{{ video_name }}</strong></h2>
+        <video controls autoplay>
+            <source src="{{ url_for('serve_video', filename=video_name) }}" type="video/mp4">
+        </video>
+    </div>
+    {% elif recognized %}
+    <div class="error-message">
+        <h3>🚫 No video found for that word</h3>
+    </div>
+    {% else %}
+    <div class="initial-message">
+        Speak or type a word to play its sign video.
+    </div>
+    {% endif %}
+<form action="/" method="get">
+    <button type="submit" 
+        style="padding: 12px 25px; margin-top:20px;
+               background:#8b6f50; color:white;
+               border:none; border-radius:10px;
+               font-size:16px; cursor:pointer;">
+        Go Back
+    </button>
+</form>
+
+
+
+</div>
+    
+<script>
+function startListening() {
+    const micButton = document.getElementById("micBtn");
+    micButton.classList.add("listening");
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        const spokenWord = event.results[0][0].transcript.toLowerCase();
+        document.getElementById("video_name").value = spokenWord;
+        document.getElementById("form").submit();
+    };
+
+    recognition.onerror = function() {
+        micButton.classList.remove("listening");
+        alert("Voice recognition error. Please try again.");
+    };
+
+    recognition.onend = function() {
+        micButton.classList.remove("listening");
+    };
+}
+</script>
+
+</body>
+</html>
